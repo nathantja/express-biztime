@@ -4,7 +4,7 @@ const express = require("express");
 const router = new express.Router();
 const db = require("../db");
 
-const { NotFoundError } = require("../expressError");
+const { NotFoundError, BadRequestError } = require("../expressError");
 
 /** Get all companies as JSON.
  *  Returns {companies: [{code, name}, ...]}
@@ -39,24 +39,38 @@ router.get("/:code", async function (req, res) {
 });
 
 /** Create new Company
+ * Accepts JSON {"code":...,"name":...,"description..."}
  * Returns {company: {code, name, description}}
  */
 router.post("/", async function (req, res) {
+  // Error Handling for if req.body is {}
+  if (Object.keys(req.body).length === 0) throw new BadRequestError();
+  console.log(req);
+
+  const { code, name, description } = req.body;
 
   const result = await db.query(
     `INSERT INTO companies (code, name, description)
           VALUES ($1, $2, $3)
           RETURNING code, name, description`,
-    [req.body.code, req.body.name, req.body.description]
+    [code, name, description]
   );
   const company = result.rows[0];
+
+  if (company === undefined) {
+    throw new BadRequestError();
+  }
   return res.status(201).json({ company });
 });
 
 /** Edit Company
+ * Accepts JSON {"name":...,"description..."}
  * Returns {company: {code, name, description}}
  */
 router.put("/:code", async function (req, res) {
+  // Error Handling for if req.body is {}
+  if (Object.keys(req.body).length === 0) throw new BadRequestError();
+  const { name, description } = req.body;
 
   const result = await db.query(
     `UPDATE companies
@@ -64,9 +78,14 @@ router.put("/:code", async function (req, res) {
                 description = $2
             WHERE code = $3
             RETURNING code, name, description`,
-    [req.body.name, req.body.description, req.params.code]
+    [name, description, req.params.code]
   );
+
   const company = result.rows[0];
+
+  if (company === undefined) {
+    throw new NotFoundError();
+  }
   return res.json({ company });
 });
 
@@ -74,6 +93,7 @@ router.put("/:code", async function (req, res) {
  * Returns ({ message: "Deleted" })
  */
 router.delete("/:code", async function (req, res) {
+
 
   await db.query(
     `DELETE FROM companies WHERE code = $1`,
