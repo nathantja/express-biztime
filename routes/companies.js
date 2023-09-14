@@ -31,10 +31,9 @@ router.get("/:code", async function (req, res) {
 
   const company = result.rows[0];
 
-  if (company === undefined) {
+  if (!company) {
     throw new NotFoundError("Code not found.");
   }
-
   return res.json({ company });
 });
 
@@ -57,7 +56,7 @@ router.post("/", async function (req, res) {
   );
   const company = result.rows[0];
 
-  if (company === undefined) {
+  if (!company) {
     throw new BadRequestError();
   }
   return res.status(201).json({ company });
@@ -71,6 +70,7 @@ router.put("/:code", async function (req, res) {
   // Error Handling for if req.body is {}
   if (Object.keys(req.body).length === 0) throw new BadRequestError();
   const { name, description } = req.body;
+  // Can check for name or description keys being undefined
 
   const result = await db.query(
     `UPDATE companies
@@ -83,7 +83,7 @@ router.put("/:code", async function (req, res) {
 
   const company = result.rows[0];
 
-  if (company === undefined) {
+  if (!company) {
     throw new NotFoundError();
   }
   return res.json({ company });

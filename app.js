@@ -11,7 +11,7 @@ const app = express();
 app.use(express.json());
 
 app.use("/companies", companiesRoutes);
-app.use("/companies", invoicesRoutes);
+app.use("/invoices", invoicesRoutes);
 
 
 
