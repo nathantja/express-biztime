@@ -69,6 +69,43 @@ router.post('/', async function (req, res) {
 
 });
 
+router.put('/:id', async function(req,res){
+  // Ask about if this should accept everything, or make it a patch
+
+  const id = req.params.id;
+  const amt = req.body.amt;
+  const comp_code = req.body.comp_code;
+  const paid = req.body.paid;
+  const add_date = req.body.add_date;
+  const paid_date = req.body.paid_date;
+  let result;
+
+  try {
+    result = await db.query(
+      `UPDATE invoices
+            SET amt = $1,
+            comp_code = $2,
+            paid = $3,
+            add_date = $4,
+            paid_date = $5
+        WHERE id = $6
+        RETURNING id, comp_code, amt, paid, add_date, paid_date`,
+        [amt,comp_code,paid,add_date,paid_date,id]
+    );
+  } catch (error) {
+    throw new BadRequestError('missing data');
+  }
+console.log(result)
+  const invoice = result.rows[0];
+  if (!invoice) throw new NotFoundError("invoice not found");
+
+  return res.json({ invoice });
+
+
+
+
+})
+
 
 
 
