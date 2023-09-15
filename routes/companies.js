@@ -21,13 +21,17 @@ router.get("/", async function (req, res) {
 
 /** Get info for specific company as JSON.
  *  Returns {company: {code, name, description, invoices: [id, ...]}}
- */
+*/
+// FIXME: be consistent with req.params.code on 31 vs 64
+// FIXME: if there arguments on multiple lines, each arg gets its own line
 router.get("/:code", async function (req, res) {
   const cResult = await db.query(
     `SELECT code, name, description
               FROM companies
               WHERE code = $1
-              `, [req.params.code]);
+              `,
+    [req.params.code]
+  );
 
   const company = cResult.rows[0];
 
@@ -38,7 +42,9 @@ router.get("/:code", async function (req, res) {
   const iResult = await db.query(
     `SELECT id
           FROM invoices
-          WHERE comp_code = $1`, [req.params.code]);
+          WHERE comp_code = $1`,
+    [req.params.code]
+  );
 
   company.invoices = iResult.rows.map(i => i.id);
 

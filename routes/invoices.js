@@ -6,6 +6,7 @@ const db = require("../db");
 
 const { NotFoundError, BadRequestError } = require("../expressError");
 
+//FIXME: use blank lines to separate groups of thought
 
 /** Get info on all invoices.
  * Returns JSON: {invoices: [{id, comp_code}, ...]}
@@ -13,8 +14,8 @@ const { NotFoundError, BadRequestError } = require("../expressError");
 router.get('/', async function (req, res) {
   const results = await db.query(
     `SELECT id, comp_code
-             FROM invoices
-             `);
+             FROM invoices`
+  );
   const invoices = results.rows;
 
   return res.json({ invoices });
@@ -28,7 +29,9 @@ router.get('/:id', async function (req, res) {
   const iResults = await db.query(
     `SELECT id, amt, paid, add_date, paid_date, comp_code
             FROM invoices
-            WHERE id = $1`, [req.params.id]);
+            WHERE id = $1`,
+    [req.params.id]
+  );
 
   const invoice = iResults.rows[0];
 
@@ -37,7 +40,9 @@ router.get('/:id', async function (req, res) {
   const cResults = await db.query(
     `SELECT code, name, description
             FROM companies
-            WHERE code = $1`, [invoice.comp_code]);
+            WHERE code = $1`,
+    [invoice.comp_code]
+  );
 
   invoice.company = cResults.rows[0];
   delete invoice.comp_code;
@@ -52,7 +57,7 @@ router.get('/:id', async function (req, res) {
 router.post('/', async function (req, res) {
   const comp_code = req.body.comp_code;
   const amt = req.body.amt;
-  if ((!comp_code) || (!amt)) throw new BadRequestError("Missing data.")
+  if ((!comp_code) || (!amt)) throw new BadRequestError("Missing data.");
 
   const result = await db.query(
     `INSERT INTO invoices (comp_code, amt)
@@ -63,7 +68,7 @@ router.post('/', async function (req, res) {
   const invoice = result.rows[0];
 
   if (!invoice) {
-    throw new BadRequestError();
+    throw new BadRequestError("Failed to create invoice.");
   }
   return res.status(201).json({ invoice });
 
@@ -73,7 +78,7 @@ router.post('/', async function (req, res) {
 /** Edit an invoice. Accepts JSON: {id, amt, comp_code, paid, add_date, paid_date}
  *  Returns JSON: {id, comp_code, amt, paid, add_date, paid_date}
  */
-router.put('/:id', async function(req,res){
+router.put('/:id', async function (req, res) {
 
   const id = req.params.id;
   const amt = req.body.amt;
@@ -93,9 +98,10 @@ router.put('/:id', async function(req,res){
             paid_date = $5
         WHERE id = $6
         RETURNING id, comp_code, amt, paid, add_date, paid_date`,
-        [amt,comp_code,paid,add_date,paid_date,id]
+      [amt, comp_code, paid, add_date, paid_date, id]
     );
   } catch (error) {
+    // can check if error is specific instance of error class... but diff solution later
     throw new BadRequestError('missing data');
   }
 
@@ -103,7 +109,7 @@ router.put('/:id', async function(req,res){
   if (!invoice) throw new NotFoundError("invoice not found");
 
   return res.json({ invoice });
-})
+});
 
 
 /** Delete an invoice.
@@ -113,14 +119,19 @@ router.delete('/:id', async function (req, res) {
   const iResults = await db.query(
     `SELECT id, amt, paid, add_date, paid_date, comp_code
             FROM invoices
-            WHERE id = $1`, [req.params.id]);
+            WHERE id = $1`,
+    [req.params.id]
+  );
 
   const invoice = iResults.rows[0];
 
   if (!invoice) throw new NotFoundError("Invoice not found.");
 
   await db.query(
-    `DELETE FROM invoices WHERE id = $1`, [req.params.id]);
+    `DELETE FROM invoices WHERE id = $1`,
+    [req.params.id]
+  );
+  //FIXME: can use returning statement to check if something was deleted
 
   return res.json({ status: "deleted" });
 });
