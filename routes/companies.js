@@ -20,20 +20,28 @@ router.get("/", async function (req, res) {
 });
 
 /** Get info for specific company as JSON.
- *  Returns {company: {code, name, description}}
+ *  Returns {company: {code, name, description, invoices: [id, ...]}}
  */
 router.get("/:code", async function (req, res) {
-  const result = await db.query(
+  const cResult = await db.query(
     `SELECT code, name, description
               FROM companies
               WHERE code = $1
               `, [req.params.code]);
 
-  const company = result.rows[0];
+  const company = cResult.rows[0];
 
   if (!company) {
     throw new NotFoundError("Code not found.");
   }
+
+  const iResult = await db.query(
+    `SELECT id
+          FROM invoices
+          WHERE comp_code = $1`, [req.params.code]);
+
+  company.invoices = iResult.rows.map(i => i.id);
+
   return res.json({ company });
 });
 

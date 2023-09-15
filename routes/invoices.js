@@ -69,8 +69,11 @@ router.post('/', async function (req, res) {
 
 });
 
+// TODO: Ask about if this should accept everything, or make it a patch?
+/** Edit an invoice. Accepts JSON: {id, amt, comp_code, paid, add_date, paid_date}
+ *  Returns JSON: {id, comp_code, amt, paid, add_date, paid_date}
+ */
 router.put('/:id', async function(req,res){
-  // Ask about if this should accept everything, or make it a patch
 
   const id = req.params.id;
   const amt = req.body.amt;
@@ -95,20 +98,32 @@ router.put('/:id', async function(req,res){
   } catch (error) {
     throw new BadRequestError('missing data');
   }
-console.log(result)
+
   const invoice = result.rows[0];
   if (!invoice) throw new NotFoundError("invoice not found");
 
   return res.json({ invoice });
-
-
-
-
 })
 
 
+/** Delete an invoice.
+ *  Returns {status: "deleted"}
+ */
+router.delete('/:id', async function (req, res) {
+  const iResults = await db.query(
+    `SELECT id, amt, paid, add_date, paid_date, comp_code
+            FROM invoices
+            WHERE id = $1`, [req.params.id]);
 
+  const invoice = iResults.rows[0];
 
+  if (!invoice) throw new NotFoundError("Invoice not found.");
+
+  await db.query(
+    `DELETE FROM invoices WHERE id = $1`, [req.params.id]);
+
+  return res.json({ status: "deleted" });
+});
 
 
 
